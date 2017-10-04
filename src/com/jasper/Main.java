@@ -22,10 +22,8 @@ public class Main {
             String fileDownloadPath = DOWNLOAD_PATH + fileName;
 //            System.out.println(fileDownloadPath);
             File downFile=new File(fileDownloadPath);
-            File parentFile=
-            if(){
 
-            }
+            
         } catch (MalformedURLException e) {
             e.printStackTrace();
         } catch (IOException e) {
