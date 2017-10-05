@@ -1,9 +1,6 @@
 package com.jasper;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.RandomAccessFile;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -114,7 +111,38 @@ public class ResumingDownloadMoudle{
                 if(!tempFile.exists()){
                     return 0;
                 }
+                FileInputStream fileInputStream=new FileInputStream(tempFile);
 
+
+
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+
+        }
+
+        private void saveProgress(long startPos){
+            File tempFile=new File(mTempFilePath);
+            File parentFile=tempFile.getParentFile();
+            if(!parentFile.exists()){
+                parentFile.mkdirs();
+            }
+
+            try {
+                RandomAccessFile randomTempFile=new RandomAccessFile(tempFile,"rw");
+                byte[] bStartPos=String.valueOf(startPos).getBytes();
+                randomTempFile.write(bStartPos,0,bStartPos.length);
+                randomTempFile.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }finally {
+                if(startPos>=mEndPos){
+                    if(tempFile.exists()){
+                        tempFile.delete();
+                    }
+                }
             }
 
         }
