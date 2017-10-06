@@ -78,8 +78,8 @@ public class ResumingDownloadMoudle{
                 System.out.println("thread:"+mThreadId+" startPos:"+mStartPos+" endPos:"+mEndPos);
 
                 HttpURLConnection httpURLConnection=(HttpURLConnection)url.openConnection();
-                httpURLConnection.setRequestMethod("POST");
-                httpURLConnection.setReadTimeout(5000);
+                httpURLConnection.setRequestMethod("GET");
+//                httpURLConnection.setReadTimeout(5000);
                 httpURLConnection.setRequestProperty("Charset","UTF-8");
                 httpURLConnection.setRequestProperty("Range","bytes="+mStartPos+"-"+mEndPos);
                 httpURLConnection.connect();
@@ -110,7 +110,7 @@ public class ResumingDownloadMoudle{
                 e.printStackTrace();
             }
         }
-
+        
         private long getProgress(){
             try {
                 File tempFile=new File(mTempFilePath);
@@ -121,15 +121,15 @@ public class ResumingDownloadMoudle{
                 BufferedInputStream bufferedInputStream=new BufferedInputStream(fileInputStream);
                 byte[] buffer=new byte[1024];
                 int len=0;
-                StringBuilder stringBuilder=new StringBuilder("");
-                while(bufferedInputStream.read(buffer)!=-1){
-                    stringBuilder.append(buffer);
+                String saveProgress="";
+                while((len=bufferedInputStream.read(buffer))!=-1){
+                    saveProgress+=new String(buffer,0,len);
                 }
 
                 fileInputStream.close();
                 bufferedInputStream.close();
 
-                long progress= Long.parseLong(stringBuilder.toString());
+                long progress= Long.parseLong(saveProgress);
                 return progress;
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -167,10 +167,9 @@ public class ResumingDownloadMoudle{
     }
 
     public static void main(String[] args){         //example for using
-//        String downloadUrl="http://7xs0af.com1.z0.glb.clouddn.com/High-Wake.mp3";
-        String downloadUrl="http://119.29.135.109:8082/photo/bicycle.bmp";
+        String downloadUrl="http://down.sandai.net/thunder9/Thunder9.1.41.914.exe";
         String downloadPath="J:\\workplace\\ResumingDownloadMoudle\\download\\";
-        ResumingDownloadMoudle resumingDownloadMoudle=new ResumingDownloadMoudle(downloadUrl,downloadPath,4);
+        ResumingDownloadMoudle resumingDownloadMoudle=new ResumingDownloadMoudle(downloadUrl,downloadPath,10);
         int fileLen=resumingDownloadMoudle.init();
         resumingDownloadMoudle.startDownlaod(fileLen);
     }
