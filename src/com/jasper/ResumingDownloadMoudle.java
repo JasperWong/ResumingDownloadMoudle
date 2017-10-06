@@ -6,25 +6,25 @@ import java.net.MalformedURLException;
 import java.net.URL;
 
 public class ResumingDownloadMoudle{
-    private String url;     // 下载网址
-    private String downloadPath;      // 本地下载路径
-    private int threadCounts;                                                            // 同时下载线程数
+    private String mUrl;     // 下载网址
+    private String mDownloadPath;      // 本地下载路径
+    private int mThreadCounts;                                                            // 同时下载线程数
 
     public ResumingDownloadMoudle(String downloadUrl, String downloadPath, int threadCounts) {
-        this.url = downloadUrl;
-        this.downloadPath = downloadPath;
-        this.threadCounts = threadCounts;
+        this.mUrl = downloadUrl;
+        this.mDownloadPath = downloadPath;
+        this.mThreadCounts = threadCounts;
     }
 
     public int init(){
         int fileLen=0;
         try {
-            URL downloadUrl=new URL(url);
+            URL downloadUrl=new URL(mUrl);
             HttpURLConnection httpURLConnection=(HttpURLConnection)downloadUrl.openConnection();
             fileLen=httpURLConnection.getContentLength();
             String remoteFilePath=httpURLConnection.getURL().getFile();
             String fileName=remoteFilePath.substring(remoteFilePath.lastIndexOf(File.separator)+2);     // 提取文件名
-            String fileDownloadPath = downloadPath + fileName;
+            String fileDownloadPath = mDownloadPath + fileName;
             File downFile=new File(fileDownloadPath);
             File parentFile=downFile.getParentFile();                                                   // 避免上级目录不存在产生的错误
             if(!parentFile.exists()){
@@ -40,13 +40,13 @@ public class ResumingDownloadMoudle{
     }
 
     public void startDownlaod(int fileLen){
-        int eachSize=fileLen/threadCounts;  // 开始下载
-        for(int i=0;i<threadCounts;i++){
-
+        int eachSize=fileLen/mThreadCounts;  // 开始下载
+        for(int i=0;i<mThreadCounts;i++){
+            new Thread(new DownloadTask(i,i*eachSize,(i+1)*eachSize-1,mDownloadPath,mUrl)).start();
         }
     }
 
-    class StartTask implements Runnable{
+    class DownloadTask implements Runnable{
 
         public static final String TEMP_NAME="tempFile";
         private int mThreadId;
@@ -56,7 +56,7 @@ public class ResumingDownloadMoudle{
         private String mDownloadUrl;
         private String mTempFilePath;
 
-        public StartTask(int mThreadId, long mStartPos, long mEndPos, String mFileDownloadPath, String mDownloadUrl) {
+        public DownloadTask(int mThreadId, long mStartPos, long mEndPos, String mFileDownloadPath, String mDownloadUrl) {
             this.mThreadId = mThreadId;
             this.mStartPos = mStartPos;
             this.mEndPos = mEndPos;
@@ -70,7 +70,12 @@ public class ResumingDownloadMoudle{
             try{
                 long startTime=System.currentTimeMillis();
                 URL url=new URL(mDownloadUrl);
-                System.out.println("thread:"+mThreadId+"startPos:"+mStartPos+"endPos"+mEndPos);
+                if(getProgress()!=0){
+                    mStartPos=getProgress();
+                }
+
+                System.out.println("thread:"+mThreadId+" startPos:"+mStartPos+" endPos:"+mEndPos);
+
                 HttpURLConnection httpURLConnection=(HttpURLConnection)url.openConnection();
                 httpURLConnection.setRequestMethod("POST");
                 httpURLConnection.setReadTimeout(5000);
@@ -91,7 +96,7 @@ public class ResumingDownloadMoudle{
                 while((size=bufferedInputStream.read(buffer))!=-1){
                     len+=size;
                     downFile.write(buffer,0,size);
-
+                    saveProgress(mStartPos+len);
                 }
 
                 long currentTime=System.currentTimeMillis();
@@ -105,20 +110,32 @@ public class ResumingDownloadMoudle{
             }
         }
 
-        private long getProgress(int threadId){
+        private long getProgress(){
             try {
                 File tempFile=new File(mTempFilePath);
                 if(!tempFile.exists()){
                     return 0;
                 }
                 FileInputStream fileInputStream=new FileInputStream(tempFile);
+                BufferedInputStream bufferedInputStream=new BufferedInputStream(fileInputStream);
+                byte[] buffer=new byte[1024];
+                int len=0;
+                StringBuilder stringBuilder=new StringBuilder("");
+                while(bufferedInputStream.read(buffer)!=-1){
+                    stringBuilder.append(buffer);
+                }
 
+                fileInputStream.close();
+                bufferedInputStream.close();
 
-
+                long progress= Long.parseLong(stringBuilder.toString());
+                return progress;
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-
+            return 0;
         }
 
         private void saveProgress(long startPos){
@@ -146,12 +163,7 @@ public class ResumingDownloadMoudle{
             }
 
         }
-
-
-
     }
-
-
 
     public static void main(String[] args){         //example for using
         String downloadUrl="http://7xs0af.com1.z0.glb.clouddn.com/High-Wake.mp3";
