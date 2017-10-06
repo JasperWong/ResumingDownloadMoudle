@@ -24,8 +24,8 @@ public class ResumingDownloadMoudle{
             fileLen=httpURLConnection.getContentLength();
             String remoteFilePath=httpURLConnection.getURL().getFile();
             String fileName=remoteFilePath.substring(remoteFilePath.lastIndexOf(File.separator)+2);     // 提取文件名
-            String fileDownloadPath = mDownloadPath + fileName;
-            File downFile=new File(fileDownloadPath);
+            mDownloadPath+=fileName;
+            File downFile=new File(mDownloadPath);
             File parentFile=downFile.getParentFile();                                                   // 避免上级目录不存在产生的错误
             if(!parentFile.exists()){
                 parentFile.mkdirs();
@@ -36,6 +36,7 @@ public class ResumingDownloadMoudle{
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println("fileSize: " + (float)Math.round(fileLen/1024000.0*100)/100+"m");
         return fileLen;
     }
 
@@ -100,13 +101,13 @@ public class ResumingDownloadMoudle{
                 }
 
                 long currentTime=System.currentTimeMillis();
-                System.out.println("thread"+mThreadId+"finish in " + (currentTime - startTime)+"ms");
+                System.out.println("thread"+mThreadId+" finished in " + (currentTime - startTime)+"ms");
                 downFile.close();
                 httpURLConnection.disconnect();
                 bufferedInputStream.close();
 
             }catch (Exception e){
-
+                e.printStackTrace();
             }
         }
 
@@ -166,7 +167,8 @@ public class ResumingDownloadMoudle{
     }
 
     public static void main(String[] args){         //example for using
-        String downloadUrl="http://7xs0af.com1.z0.glb.clouddn.com/High-Wake.mp3";
+//        String downloadUrl="http://7xs0af.com1.z0.glb.clouddn.com/High-Wake.mp3";
+        String downloadUrl="http://119.29.135.109:8082/photo/bicycle.bmp";
         String downloadPath="J:\\workplace\\ResumingDownloadMoudle\\download\\";
         ResumingDownloadMoudle resumingDownloadMoudle=new ResumingDownloadMoudle(downloadUrl,downloadPath,4);
         int fileLen=resumingDownloadMoudle.init();
